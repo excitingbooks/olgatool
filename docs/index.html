@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>js-dos 6.22</title>
+  <script src="js-dos.js"></script>
+  <style>
+    iframe {
+      width: 640px;
+      height: 480px;
+    }
+    
+    #olgascr {
+      width: 40em;
+      height: 20em;
+    }
+  </style>
+</head>
+
+<body>
+  <iframe src="jsdos.html" id="jsdos" tabindex="-1"></iframe>
+  <textarea id="olgascr">
+    arc(200,200,290,340,100);
+    arc(200,200,110,160,100);
+    line(0,0,400,400);
+    Sleep(1000);
+    Clear;
+    Bar3D(50,200,90,100,15,1);
+    Bar3D(100,200,140,120,15,1);
+    Text(100, 20, "hamb/ORGR");
+  </textarea>
+  <button onclick="runScript()">Run</button>
+  <script>
+    function scr() {
+      return document.getElementById('olgascr').value;
+    }
+    
+    function runScript() {
+      dosFrame.toDos(scr().sub("\n", "\r\n"));
+    }
+    
+    document.addEventListener('keyup', () => {
+      document.location.hash = 'scr=' + encodeURIComponent(scr());
+    });
+    
+    var scrParam = document.location.hash.split('scr=', 2)[1];
+    //scrParam = scrParam && decodeURIComponent(scrParam);
+    if (scrParam) {
+      document.getElementById('olgascr').value = decodeURIComponent(scrParam);
+    } 
+  </script>
+</body>
+
+</html>

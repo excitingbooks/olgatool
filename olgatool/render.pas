@@ -45,6 +45,66 @@ begin
   BoolP := RetVal = 1;
 end;
 
+{function ArrayOfIntP(Pos : Integer, Count : Integer) : Boolean;
+var
+  Param : String;
+  CurrentChar : Char;
+  Elements : array[1..127] of Integer;
+  CurrentElement : String;
+  InElement : Boolean;
+begin
+  Param := CurrentParams[Pos];
+  CurrentElement := '';
+  Count := 0;
+  
+  for i := 1 to Length(Param) do begin
+    CurrentChar := S[i];
+
+    case CurrentChar of
+      '[', ' ', ']': ;
+      '0'..'9', '-', '.': begin
+        if not InElement then begin
+          InElement := True;
+          Count := Count + 1;
+          Elements[Count] := '';
+        end;
+        Elements[Count] := Elements[Count] + CurrentChar;
+      ',': InElement := False;
+    end;
+  end;
+  
+  ArrayOfIntP := Elements;
+end;
+
+function ArrayOfStringP(Pos : Integer, Count : Integer) : array[1..127] of String;
+var
+  Param : String;
+  CurrentChar : Char;
+  Elements : array[1..127] of String;
+  InElement : Boolean;
+begin
+  Param := CurrentParams[Pos];
+  Count := 0;
+  
+  for i := 1 to Length(Param) do begin
+    CurrentChar := S[i];
+
+    case CurrentChar of
+      '[', ' ', ']': ;
+      '0'..'9', '-', '.': begin
+        if not InElement then begin
+          InElement := True;
+          Count := Count + 1;
+          Elements[Count] := '';
+        end;
+        Elements[Count] := Elements[Count] + CurrentChar;
+      ',': InElement := False;
+    end;
+  end;
+  
+  ArrayOfStringP := Elements;
+end;}
+
 procedure CmdArc;
 var
   p1, p2, p3, p4, p5 : String;
@@ -129,6 +189,36 @@ begin
   SetColor(IntP(1));
 end;
 
+
+procedure CmdBarChart;
+var
+  i, ValCount : Integer;
+  Val, MaxVal : Integer;
+  BorderWidth, BarInterval, BarHeight, ScaledHeight : Integer;
+  TopVal : Integer;
+begin
+  {Values := ArrayOfIntP(1, ValCount);
+  TopVal := 0;
+  
+  BorderWidth := GetMaxX / 50;
+  BarInterval := (GetMaxX - (BorderWidth * 2)) / ValCount;
+  BarHeight := (GetMaxY - (BorderWidth * 4)) / ValCount;
+  
+  for i := 1 to ValCount do begin
+    Val := Values[i];
+    if Val > TopVal then TopVal := Val;
+  end;
+  
+  for i := 1 to ValCount do begin
+    Val := Values[i];
+    ScaledHeight := Val / TopVal * BarHeight;
+    Bar3D(
+      BorderWidth + i * BarInterval, GetMaxY - BorderWidth, 
+      BorderWidth + i * BarInterval + (BarInterval / 2), GetMaxY - BorderWidth - ScaledHeight,
+      BarInterval / 2, 1);
+  end;}
+end;
+
 procedure RenderCommand(_Command : String);
 var
   i : Integer;
@@ -149,6 +239,9 @@ begin
   else if Command = 'LINE' then CmdLine
   else if Command = 'POLYGON' then CmdPolygon
   else if Command = 'TEXT' then CmdText
+    
+  else if Command = 'BARCHART' then CmdBarChart
+  
   
   else if Command = 'SLEEP' then CmdSleep
   else if Command = 'SETCOLOR' then CmdSetColor
@@ -164,6 +257,7 @@ const
   ParamIdx: Integer = 1;
   InArgs: Boolean = False;
   InString: Boolean = False;
+  InArray: Boolean = False;
   Command: String = '';
 var
   CurrentChar, c : Char;
@@ -180,16 +274,14 @@ begin
       begin
         case UpCase(CurrentChar) of
           ';', CR, LF:
-            begin
-              if Command <> '' then
-                begin
-                  RenderCommand(Command);
-                  for j := 1 to ParamIdx do
-                    CurrentParams[j] := '';
-                  ParamIdx := 1;
-                  Command := '';
-                end;
-            end;
+            if Command <> '' then
+              begin
+                RenderCommand(Command);
+                for j := 1 to ParamIdx do
+                  CurrentParams[j] := '';
+                ParamIdx := 1;
+                Command := '';
+              end;
           '(': InArgs := True;
           ')': InArgs := False;
           ',': ParamIdx := ParamIdx + 1;
@@ -227,6 +319,42 @@ begin
   ClearDevice;
 end;
 
+procedure LoopOnInbox;
+var
+  Inbox, Outbox: Text;
+  Command: String;
+  ch, ch2: Char;
+  Done: Boolean;
+begin
+  Done := False;
+  repeat
+    Assign(Inbox, 'Inbox');
+    Reset(Inbox);
+    Assign(Outbox, 'Outbox');
+    Rewrite(Outbox);
+
+    if not Eof(Inbox) then
+    begin
+      Readln(Inbox, Command);
+      {T('Inbox cmd: ' + Command);}
+      Render(Command);
+      Rewrite(Inbox);
+    end;
+    ch := ReadKey;
+    if KeyPressed then
+      ch2 := ReadKey;
+    {Writeln('> ', ch, ' ord ', Ord(ch), ' ch2 ', ch2, ' ord ', Ord(ch2));
+    Writeln(Outbox, ch);
+    Flush(Outbox);}
+    T('<' + ch);
+    case ch of
+      Chr(27): Done := True;
+    end;
+  
+    Close(Inbox);
+    Close(Outbox);
+  until Done;
+end;
 
 var
   Command : String;
@@ -240,15 +368,19 @@ begin
     'Clear;' +
     'Bar3D(50,200,90,100,15,1);' +
     'Bar3D(100,200,140,120,15,1);' +
+    'BarChart([10, 13, 20, 29, 50]);' +
     'Text(100, 20, "hamb/ORGR");' +
     '';
 
   InitGraphics;
-  SetFillStyle(CloseDotFill, 11);
-  SetColor(9);
-  SetTextStyle(9, HorizDir, 1);
+  SetFillStyle(CloseDotFill, 9);
+  SetColor(15);
+  SetTextStyle(10, HorizDir, 1);
   SetTextJustify(CenterText, TopText);;
-  Render(Command);
+
+  LoopOnInbox;
+
+  { Render(Command); }
   c := ReadKey;
   CloseGraph;
 end.

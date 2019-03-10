@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>js-dos 6.22</title>
+  <script src="js-dos.js"></script>
+  <style>
+    html, body {
+      padding: 0;
+      margin: 0;
+    }
+    
+    canvas {
+      width: 640px;
+      height: 480px;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="jsdos"></canvas>
+  <script>
+    Dos(document.getElementById("jsdos")).ready(function (fs, main) {
+      window.fs = fs;
+      window.em = fs.em;
+      window.FS = fs.em.FS;
+      window.dos = main;
+      console.log('createfile done')
+      fs.extract("olgatool.zip").then(() => {
+        main(["-c", "olgatool"])
+      });
+    });
+    
+    function toDos(str) {
+      FS.writeFile('olgatool/Inbox', str);
+    }
+    
+    function fromDos() {
+      const byteArray = FS.readFile('olgatool/Outbox');
+      return new TextDecoder("utf-8").decode(byteArray);
+    }
+    
+    function runScript() {
+      toDos(document.getElementById('olgascr').value);
+    }
+    
+    function keyThingy() {
+      console.log('keydown', arguments, document.activeElement)
+      /* if (document.activeElement === document.getElementById('jsdos')) {
+        event.preventDefault();
+      } */
+      event.stopPropagation();
+      event.preventDefault();
+      //setTimeout(() => document.getElementById('olgascr').dispatchEvent(event))
+      
+    }
+    
+    document.addEventListener('keydown', keyThingy);
+    document.addEventListener('keypress', () => console.log('keypress', arguments));
+    
+    window.parent.dosFrame = window;
+  </script>
+</body>
+
+</html>
